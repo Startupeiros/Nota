@@ -138,12 +138,25 @@ export class MemStorage implements IStorage {
     const now = new Date();
     
     // Garantir que role tenha um valor padrão se não fornecido
-    const userWithDefaults: InsertUser = {
-      ...insertUser,
-      role: insertUser.role || "financeiro"
+    const role = insertUser.role || "financeiro";
+    
+    const user: User = { 
+      id, 
+      username: insertUser.username,
+      password: insertUser.password,
+      name: insertUser.name,
+      email: insertUser.email,
+      role: role,
+      createdAt: now 
     };
     
-    const user: User = { ...userWithDefaults, id, createdAt: now };
+    console.log("Criando usuário:", { 
+      id: user.id, 
+      username: user.username, 
+      role: user.role, 
+      senha: user.password.substring(0, 10) + "..." 
+    });
+    
     this.users.set(id, user);
     return user;
   }

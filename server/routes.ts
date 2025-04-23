@@ -274,6 +274,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Rota de teste TEMPORÁRIA para verificar usuários (remover em produção)
+  app.get("/api/debug/users", async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      const safeUsers = users.map(user => {
+        return {
+          id: user.id,
+          username: user.username,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          passwordType: user.password.includes(".") ? "hash" : "texto plano",
+        };
+      });
+      res.json(safeUsers);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao obter usuários", error: String(error) });
+    }
+  });
+  
   // Dashboard routes
   app.get("/api/dashboard/stats", isAuthenticated, async (req, res) => {
     try {

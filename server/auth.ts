@@ -46,22 +46,30 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
+      console.log(`Tentativa de login para usuário: ${username}`);
       const user = await storage.getUserByUsername(username);
+      
       if (!user) {
+        console.log(`Usuário ${username} não encontrado`);
         return done(null, false);
       }
+      
+      console.log(`Usuário encontrado: ${username}, tipo de senha: ${user.password.includes('.') ? 'hash' : 'texto plano'}`);
       
       // Verificar se a senha é uma senha não hasheada para os usuários padrão
       // (somente para os usuários criados no construtor para propósitos de teste)
       if ((username === "admin" || username === "financeiro") && password === user.password) {
+        console.log(`Login por senha texto plano para usuário especial: ${username}`);
         return done(null, user);
       } 
       // Verificar senha hasheada para os demais usuários
       else if (user.password.includes('.') && await comparePasswords(password, user.password)) {
+        console.log(`Login por senha hasheada bem-sucedido: ${username}`);
         return done(null, user);
       } 
       // Falha na autenticação
       else {
+        console.log(`Falha na autenticação para ${username}: senha incorreta`);
         return done(null, false);
       }
     }),
