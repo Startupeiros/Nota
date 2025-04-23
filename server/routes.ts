@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import multer from "multer";
 import { setupAuth } from "./auth";
 import { z } from "zod";
-import { insertInvoiceSchema, insertPartnerSchema, insertCategorySchema } from "@shared/schema";
+import { insertInvoiceSchema, insertPartnerSchema, insertCategorySchema, insertUserSchema } from "@shared/schema";
 
 // Authentication middleware
 const isAuthenticated = (req: Request, res: Response, next: Function) => {

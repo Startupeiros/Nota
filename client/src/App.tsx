@@ -14,6 +14,8 @@ import AuthPage from "@/pages/auth-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 
+import UserManagementPage from "@/pages/user-management-page";
+
 function Router() {
   return (
     <Switch>
@@ -23,6 +25,7 @@ function Router() {
       <ProtectedRoute path="/categories" component={CategoriesPage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
+      <ProtectedRoute path="/users" component={UserManagementPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

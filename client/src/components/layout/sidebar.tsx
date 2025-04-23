@@ -8,7 +8,8 @@ import {
   BarChart3,
   Settings,
   Menu,
-  X
+  X,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,7 +24,8 @@ export function Sidebar({ isMobile, isOpen, setIsOpen }: SidebarProps) {
   const [location] = useLocation();
   const { user } = useAuth();
 
-  const navItems = [
+  // Itens de navegação básicos
+  const baseNavItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/invoices", label: "Notas Fiscais", icon: FileText },
     { href: "/suppliers", label: "Fornecedores", icon: Store },
@@ -31,6 +33,16 @@ export function Sidebar({ isMobile, isOpen, setIsOpen }: SidebarProps) {
     { href: "/reports", label: "Relatórios", icon: BarChart3 },
     { href: "/settings", label: "Configurações", icon: Settings },
   ];
+  
+  // Itens de navegação apenas para administradores
+  const adminNavItems = [
+    { href: "/users", label: "Usuários", icon: Users },
+  ];
+  
+  // Combina os itens de navegação com base no perfil do usuário
+  const navItems = user?.role === "admin" 
+    ? [...baseNavItems, ...adminNavItems] 
+    : baseNavItems;
 
   const closeSidebar = () => {
     if (isMobile) {
