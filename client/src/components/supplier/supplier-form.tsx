@@ -35,10 +35,16 @@ interface SupplierFormProps {
 
 // Extended schema for form validation with specific rules
 const formSchema = insertPartnerSchema.extend({
+  name: z.string().min(2, { message: "Nome é obrigatório" }),
   documentNumber: z.string()
     .min(14, { message: "CNPJ deve ter pelo menos 14 caracteres" })
     .max(18, { message: "CNPJ deve ter no máximo 18 caracteres" }),
+  entityType: z.literal("fornecedor"),
   email: z.string().email({ message: "Email inválido" }).optional().or(z.literal("")),
+  phone: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  contactName: z.string().optional().nullable(),
+  bankDetails: z.string().optional().nullable(),
 });
 
 export function SupplierForm({ open, onOpenChange, supplier, onSuccess }: SupplierFormProps) {

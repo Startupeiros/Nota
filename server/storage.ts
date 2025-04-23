@@ -197,7 +197,6 @@ export class MemStorage implements IStorage {
     const partnerData: InsertPartner = {
       ...insertSupplier,
       entityType: "fornecedor",
-      documentNumber: insertSupplier.cnpj || "",
     };
     
     const partner = await this.createPartner(partnerData);
@@ -206,9 +205,6 @@ export class MemStorage implements IStorage {
 
   async updateSupplier(id: number, supplierData: Partial<InsertSupplier>): Promise<Supplier | undefined> {
     const partnerData: Partial<InsertPartner> = { ...supplierData };
-    if (supplierData.cnpj) {
-      partnerData.documentNumber = supplierData.cnpj;
-    }
     
     const partner = await this.updatePartner(id, partnerData);
     return partner as Supplier | undefined;
