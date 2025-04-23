@@ -96,25 +96,37 @@ export class MemStorage implements IStorage {
       checkPeriod: 86400000,
     });
     
-    // Criar usuário admin padrão para testes
-    this.createUser({
+    // Criar usuários e categorias de teste diretamente
+    const now = new Date();
+    
+    // Criar usuário admin manualmente (sem async) para garantir que está pronto
+    const admin: User = {
+      id: this.currentUserId++,
       username: "admin",
       password: "admin123", // em produção, usar senha forte e hash
       name: "Administrador",
       email: "admin@exemplo.com",
-      role: "admin"
-    });
+      role: "admin",
+      createdAt: now
+    };
+    this.users.set(admin.id, admin);
+    console.log("Usuário admin criado:", { id: admin.id, username: admin.username, role: admin.role });
     
-    // Criar usuário financeiro padrão para testes
-    this.createUser({
+    // Criar usuário financeiro manualmente (sem async) para garantir que está pronto
+    const financeiro: User = {
+      id: this.currentUserId++,
       username: "financeiro",
       password: "senha123", // em produção, usar senha forte e hash
       name: "Usuário Financeiro",
       email: "financeiro@exemplo.com",
-      role: "financeiro"
-    });
+      role: "financeiro",
+      createdAt: now
+    };
+    this.users.set(financeiro.id, financeiro);
+    console.log("Usuário financeiro criado:", { id: financeiro.id, username: financeiro.username, role: financeiro.role });
     
-    // Add default categories
+    // Adicionar categorias padrão
+    // Obs: Essas chamadas são assíncronas, mas não precisamos aguardar o resultado
     this.createCategory({ name: "Aluguel/Instalações", description: "Despesas com aluguel e manutenção de instalações" });
     this.createCategory({ name: "Equipamentos", description: "Compra e manutenção de equipamentos" });
     this.createCategory({ name: "Serviços", description: "Prestação de serviços diversos" });
