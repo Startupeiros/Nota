@@ -330,7 +330,7 @@ export default function UserManagementPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDeleteUser(user.id)}
-                          disabled={user.id === user.id} // Não pode excluir a si mesmo
+                          disabled={user.id === user?.id} // Não pode excluir a si mesmo
                         >
                           <Trash className="h-4 w-4 text-destructive" />
                         </Button>

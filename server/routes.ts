@@ -14,6 +14,14 @@ const isAuthenticated = (req: Request, res: Response, next: Function) => {
   res.status(401).json({ message: "Unauthorized" });
 };
 
+// Admin middleware
+const isAdmin = (req: Request, res: Response, next: Function) => {
+  if (req.isAuthenticated() && req.user && req.user.role === "admin") {
+    return next();
+  }
+  res.status(403).json({ message: "Forbidden: Admin access required" });
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
@@ -311,6 +319,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(invoices);
     } catch (error) {
       res.status(500).json({ message: "Failed to get overdue invoices" });
+    }
+  });
+
+  // User management routes
+  app.get("/api/users", isAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      // Não enviar as senhas para o cliente
+      const safeUsers = users.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      res.json(safeUsers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get users" });
+    }
+  });
+
+  app.post("/api/register-admin", isAdmin, async (req, res) => {
+    try {
+      const validatedData = insertUserSchema.parse(req.body);
+      const newUser = await storage.createUser(validatedData);
+      
+      // Não enviar a senha para o cliente
+      const { password, ...userWithoutPassword } = newUser;
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid user data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.delete("/api/users/:id", isAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Verificar se não está tentando excluir o próprio usuário
+      if (userId === req.user!.id) {
+        return res.status(400).json({ message: "You cannot delete your own account" });
+      }
+      
+      const success = await storage.deleteUser(userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete user" });
     }
   });
 
