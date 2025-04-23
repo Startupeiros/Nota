@@ -30,12 +30,15 @@ async function comparePasswords(supplied: string, stored: string) {
 
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "invoice-management-system-secret",
+    secret: "invoice-management-system-secret-fixed",
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
     cookie: {
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true,
+      secure: false, // Definir como true em produção com HTTPS
+      sameSite: 'lax'
     }
   };
 
@@ -147,10 +150,33 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    // Return user without password
-    const { password, ...userWithoutPassword } = req.user as SelectUser;
-    res.status(200).json(userWithoutPassword);
+  app.post("/api/login", (req, res, next) => {
+    console.log("[AUTH] Login request para: ", req.body.username);
+    
+    passport.authenticate("local", (err, user, info) => {
+      if (err) {
+        console.log("[AUTH] Erro durante autenticação:", err);
+        return next(err);
+      }
+      
+      if (!user) {
+        console.log("[AUTH] Falha na autenticação - usuário não retornado");
+        return res.status(401).json({ message: "Credenciais inválidas" });
+      }
+      
+      // Login manual
+      req.login(user, (err) => {
+        if (err) {
+          console.log("[AUTH] Erro no req.login:", err);
+          return next(err);
+        }
+        
+        console.log("[AUTH] Login bem-sucedido para:", user.username);
+        // Return user without password
+        const { password, ...userWithoutPassword } = user as SelectUser;
+        return res.status(200).json(userWithoutPassword);
+      });
+    })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {
