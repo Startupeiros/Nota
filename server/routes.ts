@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import multer from "multer";
-import { setupAuth } from "./auth";
+import { setupAuth, hashPassword } from "./auth";
 import { z } from "zod";
 import { insertInvoiceSchema, insertPartnerSchema, insertCategorySchema, insertUserSchema } from "@shared/schema";
 
@@ -340,7 +340,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/register-admin", isAdmin, async (req, res) => {
     try {
       const validatedData = insertUserSchema.parse(req.body);
-      const newUser = await storage.createUser(validatedData);
+      
+      // Hash da senha antes de salvar
+      const hashedPassword = await hashPassword(validatedData.password);
+      const userData = {
+        ...validatedData,
+        password: hashedPassword
+      };
+      
+      const newUser = await storage.createUser(userData);
       
       // Não enviar a senha para o cliente
       const { password, ...userWithoutPassword } = newUser;

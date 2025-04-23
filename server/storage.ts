@@ -96,6 +96,24 @@ export class MemStorage implements IStorage {
       checkPeriod: 86400000,
     });
     
+    // Criar usuário admin padrão para testes
+    this.createUser({
+      username: "admin",
+      password: "admin123", // em produção, usar senha forte e hash
+      name: "Administrador",
+      email: "admin@exemplo.com",
+      role: "admin"
+    });
+    
+    // Criar usuário financeiro padrão para testes
+    this.createUser({
+      username: "financeiro",
+      password: "senha123", // em produção, usar senha forte e hash
+      name: "Usuário Financeiro",
+      email: "financeiro@exemplo.com",
+      role: "financeiro"
+    });
+    
     // Add default categories
     this.createCategory({ name: "Aluguel/Instalações", description: "Despesas com aluguel e manutenção de instalações" });
     this.createCategory({ name: "Equipamentos", description: "Compra e manutenção de equipamentos" });
