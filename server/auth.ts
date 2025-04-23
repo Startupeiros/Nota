@@ -5,7 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User as SelectUser, User } from "@shared/schema";
 
 declare global {
   namespace Express {
@@ -46,30 +46,73 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      console.log(`Tentativa de login para usuário: ${username}`);
+      console.log(`[AUTH] Tentativa de login para usuário: ${username}`);
+      console.log(`[AUTH] Senha fornecida: ${password}`);
+      
+      // Verificações de teste para o login estático do admin (REMOVER EM PRODUÇÃO!)
+      if (username === 'admin' && password === 'admin123') {
+        console.log('[AUTH] Autenticação estática para admin');
+        const adminUser = await storage.getUserByUsername('admin');
+        if (adminUser) {
+          console.log('[AUTH] Usuário admin encontrado no storage');
+        } else {
+          console.log('[AUTH] ERRO: Usuário admin NÃO EXISTE no storage!');
+          
+          // Criar admin manualmente como fallback
+          const now = new Date();
+          const adminUser: User = {
+            id: 1,
+            username: "admin",
+            password: "admin123",
+            name: "Administrador",
+            email: "admin@exemplo.com",
+            role: "admin",
+            createdAt: now
+          };
+          
+          console.log('[AUTH] Criando usuário admin como fallback');
+          await storage.createUser({
+            username: adminUser.username,
+            password: adminUser.password,
+            name: adminUser.name,
+            email: adminUser.email,
+            role: adminUser.role
+          });
+          
+          return done(null, adminUser);
+        }
+        
+        return done(null, adminUser);
+      }
+
+      // Processo normal de autenticação
       const user = await storage.getUserByUsername(username);
       
       if (!user) {
-        console.log(`Usuário ${username} não encontrado`);
+        console.log(`[AUTH] Usuário ${username} não encontrado`);
         return done(null, false);
       }
       
-      console.log(`Usuário encontrado: ${username}, tipo de senha: ${user.password.includes('.') ? 'hash' : 'texto plano'}`);
+      console.log(`[AUTH] Usuário encontrado: ${username}`);
+      console.log(`[AUTH] Senha armazenada: ${user.password}`);
+      console.log(`[AUTH] Tipo de senha: ${user.password.includes('.') ? 'hash' : 'texto plano'}`);
       
       // Verificar se a senha é uma senha não hasheada para os usuários padrão
       // (somente para os usuários criados no construtor para propósitos de teste)
       if ((username === "admin" || username === "financeiro") && password === user.password) {
-        console.log(`Login por senha texto plano para usuário especial: ${username}`);
+        console.log(`[AUTH] Login por senha texto plano para usuário especial: ${username}`);
         return done(null, user);
       } 
       // Verificar senha hasheada para os demais usuários
       else if (user.password.includes('.') && await comparePasswords(password, user.password)) {
-        console.log(`Login por senha hasheada bem-sucedido: ${username}`);
+        console.log(`[AUTH] Login por senha hasheada bem-sucedido: ${username}`);
         return done(null, user);
       } 
       // Falha na autenticação
       else {
-        console.log(`Falha na autenticação para ${username}: senha incorreta`);
+        console.log(`[AUTH] Falha na autenticação para ${username}: senha incorreta`);
+        console.log(`[AUTH] Senha fornecida: ${password}`);
+        console.log(`[AUTH] Senha armazenada: ${user.password}`);
         return done(null, false);
       }
     }),

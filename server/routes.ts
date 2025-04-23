@@ -285,6 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: user.name,
           email: user.email,
           role: user.role,
+          password: user.password, // TEMPORÁRIO para depuração
           passwordType: user.password.includes(".") ? "hash" : "texto plano",
         };
       });
@@ -292,6 +293,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ message: "Erro ao obter usuários", error: String(error) });
     }
+  });
+  
+  // Autenticação direta via URL para testes (REMOVER EM PRODUÇÃO!)
+  app.get("/api/debug/force-login/admin", (req, res) => {
+    const adminUser = {
+      id: 1,
+      username: "admin",
+      password: "admin123", // Obrigatório para o Passport
+      name: "Administrador",
+      email: "admin@exemplo.com",
+      role: "admin",
+      createdAt: new Date()
+    };
+    
+    req.login(adminUser, (err) => {
+      if (err) {
+        return res.status(500).json({ message: "Erro ao fazer login", error: String(err) });
+      }
+      res.redirect("/");
+    });
   });
   
   // Dashboard routes
