@@ -297,22 +297,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Autenticação direta via URL para testes (REMOVER EM PRODUÇÃO!)
   app.get("/api/debug/force-login/admin", (req, res) => {
-    const adminUser = {
-      id: 1,
-      username: "admin",
-      password: "admin123", // Obrigatório para o Passport
-      name: "Administrador",
-      email: "admin@exemplo.com",
-      role: "admin",
-      createdAt: new Date()
-    };
-    
-    req.login(adminUser, (err) => {
-      if (err) {
-        return res.status(500).json({ message: "Erro ao fazer login", error: String(err) });
+    console.log("[DEBUG-AUTH] Tentando login forçado de admin");
+    // Buscar usuário admin do storage para garantir que estamos usando uma instância válida
+    storage.getUserByUsername("admin").then(adminUser => {
+      if (!adminUser) {
+        console.log("[DEBUG-AUTH] Usuário admin NÃO ENCONTRADO no storage!");
+        return res.status(500).json({ message: "Admin não encontrado no storage" });
       }
-      res.redirect("/");
+      
+      console.log("[DEBUG-AUTH] Usuário admin encontrado:", adminUser);
+      
+      req.login(adminUser, (err) => {
+        if (err) {
+          console.log("[DEBUG-AUTH] Erro no req.login:", err);
+          return res.status(500).json({ message: "Erro ao fazer login", error: String(err) });
+        }
+        
+        console.log("[DEBUG-AUTH] Login bem-sucedido para admin");
+        console.log("[DEBUG-AUTH] req.isAuthenticated():", req.isAuthenticated());
+        console.log("[DEBUG-AUTH] req.user:", req.user);
+        
+        // Definir um cookie de sessão manualmente para garantir
+        res.cookie('session_debug', 'admin_logged_in', { 
+          maxAge: 1000 * 60 * 60 * 24, // 1 dia
+          httpOnly: true,
+          sameSite: 'lax'
+        });
+        
+        // Redirecionar para uma página de sucesso que mostra o status da autenticação
+        res.redirect("/api/debug/auth-status");
+      });
+    }).catch(error => {
+      console.log("[DEBUG-AUTH] Erro ao buscar admin:", error);
+      res.status(500).json({ message: "Erro ao buscar admin", error: String(error) });
     });
+  });
+  
+  // Rota para verificar status de autenticação
+  app.get("/api/debug/auth-status", (req, res) => {
+    console.log("[DEBUG-AUTH] Verificando status de autenticação");
+    console.log("[DEBUG-AUTH] req.isAuthenticated():", req.isAuthenticated());
+    console.log("[DEBUG-AUTH] req.user:", req.user);
+    console.log("[DEBUG-AUTH] Cookies:", req.headers.cookie);
+    
+    // Responder com status HTML para depuração
+    res.send(`
+      <html>
+        <head>
+          <title>Status de Autenticação</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.5; }
+            h1 { color: #333; }
+            .info { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+            .success { color: green; }
+            .error { color: red; }
+            pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; }
+          </style>
+        </head>
+        <body>
+          <h1>Status de Autenticação</h1>
+          <div class="info">
+            <p><strong>Autenticado:</strong> <span class="${req.isAuthenticated() ? 'success' : 'error'}">${req.isAuthenticated() ? 'Sim' : 'Não'}</span></p>
+            <p><strong>Usuário:</strong></p>
+            <pre>${req.user ? JSON.stringify(req.user, null, 2) : 'Nenhum usuário autenticado'}</pre>
+            <p><strong>Cookies:</strong></p>
+            <pre>${req.headers.cookie || 'Nenhum cookie definido'}</pre>
+          </div>
+          <p>
+            <a href="/api/debug/force-login/admin">Tentar login admin novamente</a>
+          </p>
+          <p>
+            <a href="/">Ir para a página inicial</a>
+          </p>
+        </body>
+      </html>
+    `);
   });
   
   // Dashboard routes
